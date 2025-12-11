@@ -1,0 +1,16 @@
+{
+    "domain": "xeitin_diffuser",
+    "name": "XEITIN Waterless Diffuser",
+    "version": "1.0.0",
+    "documentation": "https://github.com/your-repo/xeitin-diffuser",
+    "dependencies": ["bluetooth_adapters"],
+    "codeowners": [],
+    "requirements": ["bleak>=0.21.0"],
+    "iot_class": "local_polling",
+    "bluetooth": [
+        {
+            "local_name": "Scent-*"
+        }
+    ],
+    "config_flow": true
+}

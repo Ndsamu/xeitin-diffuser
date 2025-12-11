@@ -1,0 +1,20 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "XEITIN Diffuser Setup",
+                "description": "Select your XEITIN Waterless Diffuser or enter the Bluetooth address manually.",
+                "data": {
+                    "device_address": "Device Address"
+                }
+            },
+            "bluetooth_confirm": {
+                "title": "Confirm Device",
+                "description": "Do you want to add {name}?"
+            }
+        },
+        "abort": {
+            "already_configured": "Device is already configured"
+        }
+    }
+}
