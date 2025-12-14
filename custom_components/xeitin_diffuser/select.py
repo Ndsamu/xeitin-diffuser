@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
@@ -21,7 +20,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=60)
+# No SCAN_INTERVAL - we don't poll the device (it beeps on every command)
 
 
 async def async_setup_entry(
@@ -45,6 +44,8 @@ class XEITINModeSelect(SelectEntity):
     _attr_name = "Mode"
     _attr_icon = "mdi:format-list-numbered"
     _attr_options = MODE_OPTIONS
+    _attr_should_poll = False  # Don't poll - device beeps on every command
+    _attr_assumed_state = True  # Optimistic mode
 
     def __init__(self, entry: ConfigEntry, ble_device) -> None:
         """Initialize the select entity."""
@@ -91,6 +92,8 @@ class XEITINTimerSelect(SelectEntity):
     _attr_name = "Timer"
     _attr_icon = "mdi:timer-outline"
     _attr_options = TIMER_OPTIONS
+    _attr_should_poll = False  # Don't poll - device beeps on every command
+    _attr_assumed_state = True  # Optimistic mode
 
     def __init__(self, entry: ConfigEntry, ble_device) -> None:
         """Initialize the select entity."""

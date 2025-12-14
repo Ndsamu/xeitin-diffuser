@@ -55,8 +55,12 @@ class XEITINBLEDevice:
         self._address = address
         self._available = True  # Optimistic - assume available
         self._lock = asyncio.Lock()
+        # State tracking (optimistic - no polling)
         self.power_on = False
         self.fan_boost = False
+        self.mode = 0  # Default mode index
+        self.timer = 0  # Default timer value (0 = off)
+        self.intensity = 5  # Default intensity (1-10)
 
     @property
     def address(self) -> str:
@@ -66,7 +70,7 @@ class XEITINBLEDevice:
     def available(self) -> bool:
         return self._available
 
-    async def send_command(self, packet: bytes) -> bool:
+    async def send_command(self, packet: bytes, wait_response: bool = False) -> bool:
         """Send a command to the diffuser. Returns True on success."""
         async with self._lock:
             try:

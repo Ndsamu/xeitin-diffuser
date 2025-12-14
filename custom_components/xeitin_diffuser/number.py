@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
@@ -14,7 +13,7 @@ from .const import DOMAIN, INTENSITY_PACKETS
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=60)
+# No SCAN_INTERVAL - we don't poll the device (it beeps on every command)
 
 
 async def async_setup_entry(
@@ -38,6 +37,8 @@ class XEITINIntensityNumber(NumberEntity):
     _attr_native_max_value = 10
     _attr_native_step = 1
     _attr_mode = NumberMode.SLIDER
+    _attr_should_poll = False  # Don't poll - device beeps on every command
+    _attr_assumed_state = True  # Optimistic mode
 
     def __init__(self, entry: ConfigEntry, ble_device) -> None:
         """Initialize the number entity."""
