@@ -22,6 +22,8 @@ from .const import (
     PACKET_POWER_OFF,
     PACKET_FAN_BOOST_ON,
     PACKET_FAN_BOOST_OFF,
+    MODE_OPTIONS,
+    MODE_PACKETS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,10 +44,16 @@ async def async_setup_entry(
     ble_device = XEITINBLEDevice(address)
     hass.data[DOMAIN][entry.entry_id]["ble_device"] = ble_device
     
-    async_add_entities([
+    entities = [
         XEITINPowerSwitch(entry, ble_device),
         XEITINFanBoostSwitch(entry, ble_device),
-    ])
+    ]
+    
+    # Add individual mode switches (Mode I through Mode V)
+    for idx, mode_name in enumerate(MODE_OPTIONS):
+        entities.append(XEITINModeSwitch(entry, ble_device, idx, mode_name))
+    
+    async_add_entities(entities)
 
 
 class XEITINBLEDevice:
@@ -58,7 +66,7 @@ class XEITINBLEDevice:
         # State tracking (optimistic - no polling)
         self.power_on = False
         self.fan_boost = False
-        self.mode = 0  # Default mode index
+        self.modes_active = [False] * len(MODE_OPTIONS)  # Track each mode independently
         self.timer = 0  # Default timer value (0 = off)
         self.intensity = 5  # Default intensity (1-10)
 
@@ -162,3 +170,32 @@ class XEITINFanBoostSwitch(XEITINBaseSwitchEntity):
         if await self._ble_device.send_command(PACKET_FAN_BOOST_OFF):
             self._ble_device.fan_boost = False
             self.async_write_ha_state()
+
+
+class XEITINModeSwitch(XEITINBaseSwitchEntity):
+    """Individual mode/schedule switch for XEITIN Diffuser."""
+    _attr_icon = "mdi:calendar-clock"
+
+    def __init__(self, entry: ConfigEntry, ble_device: XEITINBLEDevice, mode_idx: int, mode_name: str) -> None:
+        # Create key like "mode_1", "mode_2", etc.
+        key = f"mode_{mode_idx + 1}"
+        super().__init__(entry, ble_device, mode_name, key)
+        self._mode_idx = mode_idx
+        self._mode_packet = MODE_PACKETS[mode_idx]
+
+    @property
+    def is_on(self) -> bool:
+        return self._ble_device.modes_active[self._mode_idx]
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        _LOGGER.info("Enabling %s", self._attr_name)
+        if await self._ble_device.send_command(self._mode_packet):
+            self._ble_device.modes_active[self._mode_idx] = True
+            self.async_write_ha_state()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        # Note: Device may not support disabling individual modes via BLE
+        # This just tracks state locally - re-enabling may be needed on device
+        _LOGGER.info("Disabling %s (local state only)", self._attr_name)
+        self._ble_device.modes_active[self._mode_idx] = False
+        self.async_write_ha_state()

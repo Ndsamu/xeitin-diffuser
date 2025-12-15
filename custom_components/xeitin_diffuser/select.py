@@ -1,4 +1,4 @@
-"""Select platform for XEITIN Diffuser mode selection."""
+"""Select platform for XEITIN Diffuser timer selection."""
 from __future__ import annotations
 
 import logging
@@ -11,8 +11,6 @@ from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
     DOMAIN,
-    MODE_OPTIONS,
-    MODE_PACKETS,
     TIMER_OPTIONS,
     TIMER_VALUES,
     TIMER_PACKETS,
@@ -32,57 +30,8 @@ async def async_setup_entry(
     ble_device = hass.data[DOMAIN][entry.entry_id]["ble_device"]
     
     async_add_entities([
-        XEITINModeSelect(entry, ble_device),
         XEITINTimerSelect(entry, ble_device),
     ])
-
-
-class XEITINModeSelect(SelectEntity):
-    """Mode selection for XEITIN Diffuser."""
-
-    _attr_has_entity_name = True
-    _attr_name = "Mode"
-    _attr_icon = "mdi:format-list-numbered"
-    _attr_options = MODE_OPTIONS
-    _attr_should_poll = False  # Don't poll - device beeps on every command
-    _attr_assumed_state = True  # Optimistic mode
-
-    def __init__(self, entry: ConfigEntry, ble_device) -> None:
-        """Initialize the select entity."""
-        self._ble_device = ble_device
-        self._entry = entry
-        self._attr_unique_id = f"{ble_device.address.replace(':', '').lower()}_mode"
-
-    @property
-    def available(self) -> bool:
-        return self._ble_device.available
-
-    @property
-    def current_option(self) -> str | None:
-        mode_idx = self._ble_device.mode
-        if 0 <= mode_idx < len(MODE_OPTIONS):
-            return MODE_OPTIONS[mode_idx]
-        return MODE_OPTIONS[0]
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._ble_device.address.replace(":", "").lower())},
-            name="XEITIN Diffuser",
-            manufacturer="XEITIN",
-            model="Waterless Diffuser B501",
-        )
-
-    async def async_select_option(self, option: str) -> None:
-        """Change the selected mode."""
-        try:
-            idx = MODE_OPTIONS.index(option)
-            _LOGGER.info("Setting mode to %s", option)
-            await self._ble_device.send_command(MODE_PACKETS[idx], wait_response=False)
-            self._ble_device.mode = idx
-            self.async_write_ha_state()
-        except ValueError:
-            _LOGGER.error("Invalid mode option: %s", option)
 
 
 class XEITINTimerSelect(SelectEntity):
